@@ -117,15 +117,6 @@ func main() {
 		lock.RUnlock()
 	})
 
-	//router.GET("/tasks/stat", cache.CacheByRequestURI(store, updPrd), func(c *gin.Context) {
-	//	lock.RLock()
-	//	c.HTML(http.StatusOK, "tasks_stat.gohtml", gin.H{
-	//		"CriterionTitles": criterionTitles,
-	//		"DeadlineTasks":
-	//	})
-	//	lock.RUnlock()
-	//})
-
 	// run server
 	err = router.Run(config.ServerAddressPort)
 	if err != nil {
