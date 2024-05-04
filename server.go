@@ -64,13 +64,13 @@ func main() {
 	errorCheckerHandler := func(c *gin.Context) {
 		update()
 		lock.RLock()
+		defer lock.RUnlock()
 		if err != nil {
 			c.HTML(http.StatusInternalServerError, "error.gohtml", gin.H{
 				"Error": err.Error(),
 			})
 			c.Abort()
 		}
-		lock.RUnlock()
 	}
 
 	// first update
@@ -83,16 +83,17 @@ func main() {
 	router.GET("/", cache.CacheByRequestURI(store, updPrd), errorCheckerHandler, func(c *gin.Context) {
 		update()
 		lock.RLock()
+		defer lock.RUnlock()
 		c.HTML(http.StatusOK, "page.gohtml", gin.H{
 			"CriterionTitles": criterionTitles,
 			"UserValues":      userValues,
 			"Single":          false,
 		})
-		lock.RUnlock()
 	})
 
 	router.GET("/search/:name", cache.CacheByRequestURI(store, updPrd), errorCheckerHandler, func(c *gin.Context) {
 		lock.RLock()
+		defer lock.RUnlock()
 		name := c.Param("name")
 		ind, found := slices.BinarySearchFunc(userValues, name, func(values *UserValues, s string) int {
 			return strings.Compare(values.FullName, s)
@@ -106,15 +107,14 @@ func main() {
 		} else {
 			c.String(http.StatusNotFound, "Nothing found with name=\"%s\"", name)
 		}
-		lock.RUnlock()
 	})
 
 	router.GET("/stats", cache.CacheByRequestURI(store, updPrd), errorCheckerHandler, func(c *gin.Context) {
 		lock.RLock()
+		defer lock.RUnlock()
 		c.HTML(http.StatusOK, "stats.gohtml", gin.H{
 			"Stats": stats,
 		})
-		lock.RUnlock()
 	})
 
 	// run server
