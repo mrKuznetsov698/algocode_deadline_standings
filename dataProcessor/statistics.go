@@ -1,4 +1,4 @@
-package data_processors
+package dataProcessor
 
 import (
 	"algocode_deadline_standings/configs"

@@ -1,4 +1,4 @@
-package data_processors
+package dataProcessor
 
 type TasksFromContest struct {
 	ContestTitle string

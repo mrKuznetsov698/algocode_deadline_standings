@@ -16,6 +16,9 @@ func RunServer(config *configs.Config) {
 		return a.Count - b.Count
 	})
 
+	// data
+	data := NewDataAccess(config)
+
 	// cache
 	store := persist.NewMemoryStore(updPrd)
 
@@ -41,17 +44,11 @@ func RunServer(config *configs.Config) {
 	router.Static("/static", "./static")
 
 	// table routes
-	router.GET("/", cache.CacheByRequestURI(store, updPrd), func(context *gin.Context) {
-		mainPage(context, config)
-	})
+	router.GET("/", cache.CacheByRequestURI(store, updPrd), addHandler(mainPage, data))
 
-	router.GET("/search/:name", cache.CacheByRequestURI(store, updPrd), func(context *gin.Context) {
-		studentStats(context, config)
-	})
+	router.GET("/search/:name", cache.CacheByRequestURI(store, updPrd), addHandler(studentStats, data))
 
-	router.GET("/stats", cache.CacheByRequestURI(store, updPrd), func(context *gin.Context) {
-		allStats(context, config)
-	})
+	router.GET("/stats", cache.CacheByRequestURI(store, updPrd), addHandler(allStats, data))
 
 	err = router.Run(config.ServerAddressPort)
 	if err != nil {

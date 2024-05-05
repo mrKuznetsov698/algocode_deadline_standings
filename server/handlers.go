@@ -2,7 +2,7 @@ package server
 
 import (
 	"algocode_deadline_standings/configs"
-	processors "algocode_deadline_standings/data-processors"
+	processors "algocode_deadline_standings/dataProcessor"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"slices"
@@ -25,39 +25,44 @@ func getData(config *configs.Config, needStats bool) (
 	return criterionTitles, userValues, stats, err
 }
 
-func errorChecker(c *gin.Context, err error) { // just shows an error if something happened
-	if err == nil {
-		return
+func dataTick(c *gin.Context, data *DataAccess) {
+	if err := data.tick(); err != nil {
+		c.HTML(http.StatusInternalServerError, "error.gohtml", gin.H{
+			"Error": err.Error(),
+		})
+		c.Abort()
 	}
-	c.HTML(http.StatusInternalServerError, "error.gohtml", gin.H{
-		"Error": err.Error(),
-	})
-	c.Abort()
 }
 
-func mainPage(c *gin.Context, config *configs.Config) {
-	criterionTitles, userValues, _, err := getData(config, false)
-	errorChecker(c, err)
+func addHandler(handler func(*gin.Context, *DataAccess), data *DataAccess) func(*gin.Context) {
+	return func(c *gin.Context) {
+		if err := data.tick(); err != nil {
+			c.HTML(http.StatusInternalServerError, "error.gohtml", gin.H{
+				"Error": err.Error(),
+			})
+			return
+		}
+		handler(c, data)
+	}
+}
+
+func mainPage(c *gin.Context, data *DataAccess) {
 	c.HTML(http.StatusOK, "page.gohtml", gin.H{
-		"CriterionTitles": criterionTitles,
-		"UserValues":      userValues,
+		"CriterionTitles": data.criterionTitles,
+		"UserValues":      data.userValues,
 		"Single":          false,
 	})
 }
 
-func studentStats(c *gin.Context, config *configs.Config) {
-	// don't know how to avoid these two lines
-	criterionTitles, userValues, _, err := getData(config, false)
-	errorChecker(c, err)
-
+func studentStats(c *gin.Context, data *DataAccess) {
 	name := c.Param("name")
-	ind, found := slices.BinarySearchFunc(userValues, name, func(values *processors.UserValues, s string) int {
+	ind, found := slices.BinarySearchFunc(data.userValues, name, func(values *processors.UserValues, s string) int {
 		return strings.Compare(values.FullName, s)
 	})
 	if found {
 		c.HTML(http.StatusOK, "page.gohtml", gin.H{
-			"CriterionTitles": criterionTitles,
-			"UserValues":      []*processors.UserValues{userValues[ind]},
+			"CriterionTitles": data.criterionTitles,
+			"UserValues":      []*processors.UserValues{data.userValues[ind]},
 			"Single":          true,
 		})
 	} else {
@@ -65,11 +70,8 @@ func studentStats(c *gin.Context, config *configs.Config) {
 	}
 }
 
-func allStats(c *gin.Context, config *configs.Config) {
-	_, _, stats, err := getData(config, true)
-	errorChecker(c, err)
-
+func allStats(c *gin.Context, data *DataAccess) {
 	c.HTML(http.StatusOK, "stats.gohtml", gin.H{
-		"Stats": stats,
+		"Stats": data.stats,
 	})
 }
