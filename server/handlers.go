@@ -1,7 +1,6 @@
 package server
 
 import (
-	"algocode_deadline_standings/configs"
 	processors "algocode_deadline_standings/dataProcessor"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -9,32 +8,32 @@ import (
 	"strings"
 )
 
-func getData(config *configs.Config, needStats bool) (
-	[]*processors.CriterionTitle,
-	[]*processors.UserValues,
-	map[int]*processors.Stats,
-	error) {
+//func getData(config *configs.Config, needStats bool) (
+//	[]*processors.CriterionTitle,
+//	[]*processors.UserValues,
+//	map[int]*processors.Stats,
+//	error) {
+//
+//	// hope we can do it on every request
+//	criterionTitles, userValues, err := processors.GetDeadlineResults(config)
+//	var stats map[int]*processors.Stats
+//	if needStats && err == nil {
+//		stats, err = processors.CreateStatistics(config, userValues)
+//	}
+//	// yes, that will return trash in stats if we don't need it or an error occurred
+//	return criterionTitles, userValues, stats, err
+//}
 
-	// hope we can do it on every request
-	criterionTitles, userValues, err := processors.GetDeadlineResults(config)
-	var stats map[int]*processors.Stats
-	if needStats && err == nil {
-		stats, err = processors.CreateStatistics(config, userValues)
-	}
-	// yes, that will return trash in stats if we don't need it or an error occurred
-	return criterionTitles, userValues, stats, err
-}
+//func dataTick(c *gin.Context, data *DataAccess) {
+//	if err := data.tick(); err != nil {
+//		c.HTML(http.StatusInternalServerError, "error.gohtml", gin.H{
+//			"Error": err.Error(),
+//		})
+//		c.Abort()
+//	}
+//}
 
-func dataTick(c *gin.Context, data *DataAccess) {
-	if err := data.tick(); err != nil {
-		c.HTML(http.StatusInternalServerError, "error.gohtml", gin.H{
-			"Error": err.Error(),
-		})
-		c.Abort()
-	}
-}
-
-func addHandler(handler func(*gin.Context, *DataAccess), data *DataAccess) func(*gin.Context) {
+func addHandler(handler func(*gin.Context, *DataAccess), data *DataAccess) GinHandler {
 	return func(c *gin.Context) {
 		if err := data.tick(); err != nil {
 			c.HTML(http.StatusInternalServerError, "error.gohtml", gin.H{
