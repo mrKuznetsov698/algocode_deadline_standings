@@ -41,6 +41,8 @@ func addHandler(handler func(*gin.Context, *DataAccess), data *DataAccess) GinHa
 			})
 			return
 		}
+		data.lock.RLock()
+		defer data.lock.RUnlock()
 		handler(c, data)
 	}
 }
